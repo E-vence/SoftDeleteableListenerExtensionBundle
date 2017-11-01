@@ -14,7 +14,9 @@ use Gedmo\Mapping\ExtensionMetadataFactory;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 
-use Emdesk\Base\Interfaces\SoftDelete;
+use Emdesk\Base\Interfaces\SoftDelete as SoftDeleteEmdesk;
+use Secondred\Base\Interfaces\SoftDelete as SoftDeleteSecondred;
+
 
 /**
  * Soft delete listener class for onSoftDelete behaviour.
@@ -142,7 +144,7 @@ class SoftDeleteListener
 
                     if ($objects) {
                         foreach ($objects as $object) {
-                            if ($object instanceof SoftDelete) {
+                            if ($object instanceof SoftDeleteEmdesk || $object instanceof SoftDeleteSecondred) {
                                 $softDelete = true;
                             } else {
                                 $softDelete = false;
