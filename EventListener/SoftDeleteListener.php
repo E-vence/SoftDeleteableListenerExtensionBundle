@@ -14,6 +14,8 @@ use Gedmo\Mapping\ExtensionMetadataFactory;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 
+use Emdesk\Base\Interfaces\SoftDelete;
+
 /**
  * Soft delete listener class for onSoftDelete behaviour.
  *
@@ -139,14 +141,13 @@ class SoftDeleteListener
                     }
 
                     if ($objects) {
-                        $factory = $em->getMetadataFactory();
-                        $cacheDriver = $factory->getCacheDriver();
-                        $cacheId = ExtensionMetadataFactory::getCacheId($namespace, 'Gedmo\SoftDeleteable');
-                        $softDelete = false;
-                        if (($config = $cacheDriver->fetch($cacheId)) !== false) {
-                            $softDelete = isset($config['softDeleteable']) && $config['softDeleteable'];
-                        }
                         foreach ($objects as $object) {
+                            if ($object instanceof SoftDelete) {
+                                $softDelete = true;
+                            } else {
+                                $softDelete = false;
+                            }
+
                             if (strtoupper($onDelete->type) === 'SET NULL') {
                                 $reflProp = $meta->getReflectionProperty($property->name);
                                 $oldValue = $reflProp->getValue($object);
