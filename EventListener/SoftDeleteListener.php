@@ -12,7 +12,6 @@ use Doctrine\ORM\Mapping\JoinTable;
 use Evence\Bundle\SoftDeleteableExtensionBundle\Exception\OnSoftDeleteUnknownTypeException;
 use Evence\Bundle\SoftDeleteableExtensionBundle\Mapping\Annotation\onSoftDelete;
 use Gedmo\Mapping\ExtensionMetadataFactory;
-use Secondred\Log\Facade\Logger;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 
@@ -43,8 +42,6 @@ class SoftDeleteListener
         $em = $args->getEntityManager();
         $uow = $em->getUnitOfWork();
         $entity = $args->getEntity();
-
-        Logger::application()->info('test Evence\Bundle\SoftDeleteableExtensionBundle\EventListener preSoftDelete');
 
         $entityReflection = new \ReflectionObject($entity);
 
