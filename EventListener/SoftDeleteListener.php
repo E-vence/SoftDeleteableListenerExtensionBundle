@@ -3,6 +3,7 @@
 namespace Evence\Bundle\SoftDeleteableExtensionBundle\EventListener;
 
 use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\Id;
@@ -11,11 +12,13 @@ use Doctrine\ORM\Mapping\JoinTable;
 use Evence\Bundle\SoftDeleteableExtensionBundle\Exception\OnSoftDeleteUnknownTypeException;
 use Evence\Bundle\SoftDeleteableExtensionBundle\Mapping\Annotation\onSoftDelete;
 use Gedmo\Mapping\ExtensionMetadataFactory;
+use Secondred\Log\Facade\Logger;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 
 use Emdesk\Base\Interfaces\SoftDelete as SoftDeleteEmdesk;
 use Secondred\Base\Interfaces\SoftDelete as SoftDeleteSecondred;
+use Zend\Log\LoggerServiceFactory;
 
 
 /**
@@ -40,6 +43,8 @@ class SoftDeleteListener
         $em = $args->getEntityManager();
         $uow = $em->getUnitOfWork();
         $entity = $args->getEntity();
+
+        Logger::application()->info('test Evence\Bundle\SoftDeleteableExtensionBundle\EventListener preSoftDelete');
 
         $entityReflection = new \ReflectionObject($entity);
 
@@ -72,15 +77,15 @@ class SoftDeleteListener
                         $nsFromRelativeToAbsolute = $entityReflection->getNamespaceName().'\\'.$relationship->targetEntity;
                         $nsFromRoot = '\\'.$relationship->targetEntity;
                         if(class_exists($nsOriginal)){
-                           $ns = $nsOriginal;
+                            $ns = $nsOriginal;
                         }
                         elseif(class_exists($nsFromRoot)){
-                          $ns = $nsFromRoot;
+                            $ns = $nsFromRoot;
                         }
                         elseif(class_exists($nsFromRelativeToAbsolute)){
-                           $ns = $nsFromRelativeToAbsolute;
+                            $ns = $nsFromRelativeToAbsolute;
                         }
-                        
+
                         if ($manyToOne && $ns && $entity instanceof $ns) {
                             $objects = $em->getRepository($namespace)->findBy(array(
                                 $property->name => $entity,
@@ -178,27 +183,19 @@ class SoftDeleteListener
     }
 
 
+    /**
+     * @param EntityManagerInterface $em
+     * @param $config
+     * @param SoftDeleteEmdesk|SoftDeleteSecondred $object
+     */
     protected function softDeleteCascade($em, $config, $object)
     {
-        $meta = $em->getClassMetadata(get_class($object));
-        $reflProp = $meta->getReflectionProperty($config['fieldName']);
-        $oldValue = $reflProp->getValue($object);
-        if ($oldValue instanceof \Datetime) {
+        if ($object->isDeleted()) {
             return;
         }
 
-        //check next level
-        $args = new LifecycleEventArgs($object, $em);
-        $this->preSoftDelete($args);
-
-        $date = new \DateTime();
-        $reflProp->setValue($object, $date);
-
-        $uow = $em->getUnitOfWork();
-        $uow->propertyChanged($object, $config['fieldName'], $oldValue, $date);
-        $uow->scheduleExtraUpdate($object, array(
-            $config['fieldName'] => array($oldValue, $date),
-        ));
+        // remove next level
+        $em->remove($object);
     }
 
     private function getPropertyByColumName(\ReflectionClass $entityReflection, $name){
@@ -212,8 +209,8 @@ class SoftDeleteListener
                 $column->name == $name
             ) {
 
-               return $p;
+                return $p;
             }
         }
-     }
+    }
 }
