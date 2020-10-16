@@ -83,6 +83,12 @@ class SoftDeleteListener
                             $ns = $nsFromRelativeToAbsolute;
                         }
 
+                        // versionsfilter deaktivieren
+                        $enableFilter = false;
+                        if ($em->getFilters()->isEnabled('ProjectVersionAware')) {
+                            $em->getFilters()->disable('ProjectVersionAware');
+                            $enableFilter = true;
+                        }
                         if ($manyToOne && $ns && $entity instanceof $ns) {
                             $objects = $em->getRepository($namespace)->findBy(array(
                                 $property->name => $entity,
@@ -141,6 +147,9 @@ class SoftDeleteListener
 
                             $objects = $qb->getQuery()->getResult();
 
+                        }
+                        if ($enableFilter) {
+                            $em->getFilters()->enable('ProjectVersionAware');
                         }
                     }
 
