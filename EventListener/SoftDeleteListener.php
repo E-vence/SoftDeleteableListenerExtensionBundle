@@ -174,7 +174,7 @@ class SoftDeleteListener
                                 ));
                             } elseif (strtoupper($onDelete->type) === 'CASCADE') {
                                 if ($softDelete) {
-                                    $this->softDeleteCascade($em, $config, $object);
+                                    $this->softDeleteCascade($em, null, $object);
                                 } else {
                                     $em->remove($object);
                                 }
